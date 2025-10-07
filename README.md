@@ -87,6 +87,14 @@ Sort the output by specific fields using `--sort-by` with a JSONPath expression:
   ```bash
   kubectl get nodes --sort-by=.status.capacity.cpu
   ```
+### To read the yaml file in json formate
+
+Suppose /root/my-kube-config is yaml file 
+
+  ```bash
+  kubectl config view --kubeconfig=/root/my-kube-config
+  ```
+
 
 ### Notes
 - JSONPath queries must match the structure of the JSON output. Use `kubectl get <resource> -o json` to inspect the structure.
