@@ -1,6 +1,6 @@
 # k8s_JsonPath
 
-This repository provides a comprehensive guide to using JSONPath with `kubectl` in Kubernetes to query and format resource data. It covers why JSONPath is useful, how to construct JSONPath queries, and examples for extracting specific information, looping through results, and sorting output.
+This repository provides a comprehensive guide to using JSONPath with `kubectl` in Kubernetes to query and format resource data. It covers why JSONPath is useful, how to construct JSONPath queries, and examples for extracting specific information, looping through results, sorting output, and working with kubeconfig files and Persistent Volumes.
 
 ## Why JSONPath in Kubernetes?
 
@@ -87,25 +87,91 @@ Sort the output by specific fields using `--sort-by` with a JSONPath expression:
   ```bash
   kubectl get nodes --sort-by=.status.capacity.cpu
   ```
-### To read the yaml file in json formate
 
-Suppose /root/my-kube-config is yaml file 
+## Additional JSONPath Use Cases
 
-  ```bash
-  kubectl config view --kubeconfig=/root/my-kube-config -o json
-  kubectl config view --kubeconfig=my-kube-config  -o jsonpath="{.users[*].name}" 
-  ```
+### Store Node List in JSON Format
+To save the full JSON output of nodes to a file:
+```bash
+kubectl get nodes -o json > /opt/outputs/nodes.json
+```
 
+### Get Details of a Specific Node
+To retrieve the JSON details for a specific node (e.g., `node01`):
+```bash
+kubectl get node node01 -o json > /opt/outputs/node01.json
+```
+
+### Fetch Node Names with JSONPath
+To extract just the names of all nodes:
+```bash
+kubectl get nodes -o=jsonpath='{.items[*].metadata.name}'
+```
+Example output:
+```
+node-1 node-2 node-3
+```
+
+### Retrieve osImage of All Nodes
+To get the operating system image of all nodes:
+```bash
+kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.osImage}'
+```
+Example output:
+```
+Ubuntu 20.04.6 LTS Ubuntu 22.04.3 LTS
+```
+
+### Extract User Names from Kubeconfig
+Given a kubeconfig file at `/root/my-kube-config`, extract user names and store them in `/opt/outputs/users.txt`:
+```bash
+kubectl config view --kubeconfig=/root/my-kube-config -o jsonpath='{.users[*].name}' > /opt/outputs/users.txt
+```
+Example content of `/opt/outputs/users.txt`:
+```
+aws-user k8s-admin
+```
+
+### Identify Context for a Specific User
+To find the context associated with a specific user (e.g., `aws-user`) in the kubeconfig file:
+```bash
+kubectl config view --kubeconfig=/root/my-kube-config -o jsonpath="{.contexts[?(@.context.user=='aws-user')].name}"
+```
+Example output:
+```
+aws-context
+```
+
+### Sort Persistent Volumes by Capacity
+To sort Persistent Volumes (PVs) by their storage capacity:
+```bash
+kubectl get pv --sort-by=.spec.capacity.storage
+```
+
+### Retrieve Specific Columns for Persistent Volumes
+To display only the name and capacity of sorted PVs:
+```bash
+kubectl get pv --sort-by=.spec.capacity.storage -o=custom-columns=NAME:.metadata.name,CAPACITY:.spec.capacity.storage
+```
+Example output:
+```
+NAME       CAPACITY
+pv-1       1Gi
+pv-2       5Gi
+pv-3       10Gi
+```
 
 ### Notes
-- JSONPath queries must match the structure of the JSON output. Use `kubectl get <resource> -o json` to inspect the structure.
-- The `range` keyword in JSONPath allows iteration over arrays (e.g., `.items[*]` for all items in a list).
-- Ensure proper quoting for JSONPath expressions, especially when using special characters like `{` or `}`.
+- Ensure the kubeconfig file path (`/root/my-kube-config`) is accessible and valid.
+- JSONPath queries must match the structure of the JSON output. Use `kubectl get <resource> -o json` or `kubectl config view -o json` to inspect the structure.
+- The `range` keyword in JSONPath allows iteration over arrays (e.g., `.items[*]` for nodes or pods).
+- Use single quotes for JSONPath expressions to avoid shell interpretation of special characters.
 - For complex queries, test incrementally to avoid errors.
 
 ## References
 - [Kubernetes Documentation: JSONPath](https://kubernetes.io/docs/reference/kubectl/jsonpath/)
 - [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+- [Managing Kubeconfig Files](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)
 
 ## Conclusion
-JSONPath in Kubernetes enhances the flexibility of `kubectl` by allowing precise data extraction and formatting. Whether extracting specific fields, looping through resources, creating custom columns, or sorting output, JSONPath is a powerful tool for administrators and developers working with Kubernetes clusters. By mastering JSONPath, you can streamline automation tasks and gain deeper insights into your cluster’s state.
+JSONPath in Kubernetes enhances the flexibility of `kubectl` by allowing precise data extraction and formatting. Whether extracting node details, user names from kubeconfig files, sorting Persistent Volumes, or creating custom columns, JSONPath is a powerful tool for administrators and developers. By mastering JSONPath, you can streamline automation tasks, manage kubeconfig contexts, and gain deeper insights into your cluster’s state.
