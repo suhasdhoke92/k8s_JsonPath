@@ -92,7 +92,8 @@ Sort the output by specific fields using `--sort-by` with a JSONPath expression:
 Suppose /root/my-kube-config is yaml file 
 
   ```bash
-  kubectl config view --kubeconfig=/root/my-kube-config
+  kubectl config view --kubeconfig=/root/my-kube-config -o json
+  kubectl config view --kubeconfig=my-kube-config  -o jsonpath="{.users[*].name}" 
   ```
 
 
